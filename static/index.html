@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AFtecnologia — Tecnologia al mejor precio en Colombia</title>
+<meta name="description" content="Computadores, celulares, impresoras y accesorios. Mas de 15 anos de experiencia. Envios nacionales, garantias extendidas."/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --orange:#F97316;--orange-dk:#EA580C;--orange-lt:#FFF7ED;--orange-mid:#FED7AA;
+  --dark:#1C1C1E;--gray-50:#F9FAFB;--gray-100:#F3F4F6;--gray-200:#E5E7EB;
+  --gray-400:#9CA3AF;--gray-600:#4B5563;--gray-800:#1F2937;
+  --white:#FFFFFF;--radius:12px;
+  --shadow:0 2px 8px rgba(0,0,0,.08);--shadow-lg:0 8px 32px rgba(0,0,0,.12);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:#F7F7F7;color:var(--gray-800);font-size:15px}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;border:none;font-family:inherit}
+img{max-width:100%;display:block}
+
+/* HEADER */
+.header{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:2px solid var(--orange);box-shadow:0 2px 12px rgba(249,115,22,.15)}
+.header-inner{max-width:1280px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:16px}
+.logo{display:flex;align-items:center;gap:10px;flex-shrink:0;text-decoration:none}
+.logo img{height:46px;width:auto;object-fit:contain}
+.logo-fallback{font-size:22px;font-weight:800;color:var(--orange);white-space:nowrap}
+.logo-fallback span{color:var(--gray-800)}
+.search-wrap{flex:1;max-width:600px;position:relative}
+.search-wrap input{width:100%;padding:11px 44px 11px 16px;border:2px solid var(--gray-200);border-radius:25px;font-size:14px;outline:none;transition:border-color .2s;font-family:inherit;background:var(--gray-50)}
+.search-wrap input:focus{border-color:var(--orange);background:#fff}
+.search-wrap button{position:absolute;right:4px;top:50%;transform:translateY(-50%);background:var(--orange);border:none;border-radius:20px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px}
+.header-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.cart-btn{background:var(--orange);color:#fff;padding:10px 18px;border-radius:25px;font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;transition:background .2s}
+.cart-btn:hover{background:var(--orange-dk)}
+.cart-badge{background:#fff;color:var(--orange);border-radius:50%;width:20px;height:20px;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+
+/* TRUST BAR */
+.trust-bar{background:var(--orange);color:#fff;padding:8px 20px;text-align:center}
+.trust-bar-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:wrap}
+.trust-item{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600}
+
+/* CATS */
+.cats-bar{background:#fff;border-bottom:1px solid var(--gray-200);padding:0 20px;position:relative}
+.cats-inner{max-width:1280px;margin:0 auto;display:flex;gap:6px;overflow-x:auto;padding:10px 0;scrollbar-width:thin;scrollbar-color:var(--orange-mid) transparent}
+.cats-inner::-webkit-scrollbar{height:3px}
+.cats-inner::-webkit-scrollbar-track{background:transparent}
+.cats-inner::-webkit-scrollbar-thumb{background:var(--orange-mid);border-radius:3px}
+.cat-pill{flex-shrink:0;padding:7px 16px;border-radius:20px;font-size:13px;font-weight:600;background:var(--gray-100);color:var(--gray-600);cursor:pointer;transition:all .2s;white-space:nowrap;border:2px solid transparent}
+.cat-pill:hover,.cat-pill.active{background:var(--orange-lt);color:var(--orange);border-color:var(--orange)}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,var(--orange-dk) 0%,var(--orange) 60%,#FB923C 100%);padding:48px 20px;color:#fff}
+.hero-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap}
+.hero-text h1{font-size:clamp(26px,4vw,46px);font-weight:800;line-height:1.15;margin-bottom:12px}
+.hero-text h1 span{color:var(--orange-mid)}
+.hero-text p{font-size:16px;opacity:.9;margin-bottom:20px;max-width:480px}
+.hero-badges{display:flex;gap:10px;flex-wrap:wrap}
+.hero-badge{background:rgba(255,255,255,.2);backdrop-filter:blur(4px);padding:7px 14px;border-radius:20px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.hero-cta{display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--orange);padding:13px 26px;border-radius:25px;font-weight:800;font-size:15px;margin-top:20px;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.hero-cta:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+/* SLIDER PORTADA */
+.hero-slider{flex:1;min-width:260px;max-width:480px;position:relative;border-radius:20px;overflow:hidden;background:rgba(0,0,0,.18);box-shadow:0 12px 48px rgba(0,0,0,.28)}
+.hs-track{display:flex;transition:transform .52s cubic-bezier(.4,0,.2,1);will-change:transform}
+/* Slide: ancho fijado por JS al renderizar */
+.hs-slide{flex-shrink:0;cursor:pointer;display:flex;flex-direction:column;overflow:hidden;transition:opacity .2s}
+.hs-slide:hover{opacity:.9}
+.hs-img-wrap{width:100%;display:flex;align-items:center;justify-content:center;height:248px;background:rgba(255,255,255,.14);padding:18px 14px}
+.hs-img-wrap img{max-height:218px;max-width:100%;object-fit:contain;filter:drop-shadow(0 8px 28px rgba(0,0,0,.32))}
+.hs-ph{font-size:76px;opacity:.28;display:flex;align-items:center;justify-content:center;height:218px}
+.hs-info{padding:13px 16px 16px;background:rgba(0,0,0,.35);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#fff;text-align:center}
+.hs-name{font-size:13px;font-weight:600;line-height:1.38;opacity:.96;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hs-price-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.hs-price,.hs-new-price{font-size:28px;font-weight:800;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.4)}
+.hs-old-price{font-size:14px;text-decoration:line-through;opacity:.55;font-weight:400}
+.hs-prev,.hs-next{position:absolute;top:44%;transform:translateY(-50%);background:rgba(255,255,255,.22);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;z-index:2}
+.hs-prev{left:8px}.hs-next{right:8px}
+.hs-prev:hover,.hs-next:hover{background:rgba(255,255,255,.45)}
+.hs-dots{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:2}
+.hs-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.35);cursor:pointer;transition:all .2s}
+.hs-dot.active{background:#fff;transform:scale(1.35)}
+/* PRECIO DESCUENTO */
+.price-old{font-size:13px;text-decoration:line-through;color:var(--gray-400);font-weight:400;margin-right:2px}
+.discount-badge{background:#DC2626;color:#fff;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:700;display:inline-block;vertical-align:middle;margin-left:3px}
+.offer-badge{position:absolute;top:8px;left:8px;background:#DC2626;color:#fff;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;z-index:1;pointer-events:none}
+/* SECCION OFERTAS */
+.offers-wrap{background:linear-gradient(135deg,#FFF1F2 0%,#FFF7ED 100%);padding:8px 0}
+/* FALLBACK HERO (sin portada configurada) */
+.hero-visual{flex-shrink:0;filter:drop-shadow(0 12px 32px rgba(0,0,0,.18))}
+
+/* SECCION */
+.section{max-width:1280px;margin:0 auto;padding:36px 20px}
+.section-title{font-size:21px;font-weight:800;color:var(--gray-800);margin-bottom:22px;display:flex;align-items:center;gap:10px}
+.section-title::after{content:'';flex:1;height:2px;background:linear-gradient(to right,var(--orange-mid),transparent)}
+
+/* TARJETA */
+.featured-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:16px}
+.prod-card{background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column;cursor:pointer}
+.prod-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+.prod-img{width:100%;aspect-ratio:1;object-fit:contain;padding:12px;background:var(--gray-50)}
+.prod-img-ph{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:50px;background:var(--gray-50)}
+.prod-body{padding:12px;flex:1;display:flex;flex-direction:column;gap:5px}
+.prod-cat{font-size:11px;font-weight:700;color:var(--orange);background:var(--orange-lt);padding:2px 8px;border-radius:10px;display:inline-block;width:fit-content}
+.prod-name{font-size:13px;font-weight:600;color:var(--gray-800);line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.prod-price{font-size:18px;font-weight:800;color:var(--orange);margin-top:auto;padding-top:6px}
+.prod-add{margin:0 12px 12px;padding:9px;background:var(--orange);color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-align:center;transition:background .2s}
+.prod-add:hover{background:var(--orange-dk)}
+
+/* GRID PRINCIPAL */
+.products-wrap{background:var(--gray-50);padding:8px 0 40px}
+.products-inner{max-width:1280px;margin:0 auto;padding:0 20px}
+.products-header{display:flex;align-items:center;justify-content:space-between;padding:20px 0 16px;flex-wrap:wrap;gap:10px}
+.products-header h2{font-size:18px;font-weight:700}
+.products-count{font-size:13px;color:var(--gray-400)}
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:16px}
+.empty-state{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--gray-400)}
+.empty-state .icon{font-size:54px;margin-bottom:12px}
+.pagination{display:flex;gap:6px;justify-content:center;margin-top:28px;flex-wrap:wrap}
+.pg-btn{padding:8px 14px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.pg-btn:hover,.pg-btn.active{background:var(--orange);color:#fff;border-color:var(--orange)}
+
+/* SERVICIOS */
+.services-wrap{background:#fff;padding:8px 0}
+.services-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:18px}
+.service-card{background:var(--gray-50);border-radius:var(--radius);padding:26px 22px;border:2px solid transparent;transition:all .25s}
+.service-card:hover{border-color:var(--orange);background:var(--orange-lt);transform:translateY(-3px)}
+.service-icon{font-size:38px;margin-bottom:12px}
+.service-title{font-size:16px;font-weight:700;color:var(--gray-800);margin-bottom:8px}
+.service-desc{font-size:13px;color:var(--gray-600);line-height:1.6;text-align:justify}
+
+/* NOSOTROS */
+.about-wrap{background:linear-gradient(135deg,var(--gray-800) 0%,#374151 100%);color:#fff;padding:60px 20px}
+.about-inner{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+.about-title{font-size:28px;font-weight:800;margin-bottom:16px}
+.about-title span{color:var(--orange)}
+.about-text{font-size:14px;line-height:1.8;color:#D1D5DB;margin-bottom:14px;text-align:justify}
+.about-list{list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.about-list li{font-size:14px;color:#D1D5DB;display:flex;align-items:start;gap:8px}
+.about-list li::before{content:'checkmark';color:var(--orange);font-weight:700;flex-shrink:0}
+.vision-card{background:rgba(255,255,255,.06);border-radius:12px;padding:22px;border-left:4px solid var(--orange);margin-bottom:16px}
+.vision-card h3{font-size:15px;font-weight:700;color:var(--orange);margin-bottom:8px}
+.vision-card p{font-size:13px;color:#D1D5DB;line-height:1.7;text-align:justify}
+
+/* CONTACTO */
+.contact-wrap{background:var(--gray-50);padding:60px 20px}
+.contact-inner{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:48px}
+.contact-title{font-size:26px;font-weight:800;margin-bottom:8px}
+.contact-sub{font-size:14px;color:var(--gray-400);margin-bottom:28px}
+.contact-item{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.contact-icon{width:44px;height:44px;border-radius:50%;background:var(--orange-lt);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.contact-label{font-size:11px;color:var(--gray-400);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.contact-value{font-size:15px;font-weight:600;color:var(--gray-800)}
+.hours-card{background:#fff;border-radius:var(--radius);padding:28px;box-shadow:var(--shadow)}
+.hours-title{font-size:16px;font-weight:700;margin-bottom:18px}
+.hours-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100);font-size:14px}
+.hours-row:last-child{border:none}
+.hours-day{color:var(--gray-600)}
+.hours-time{font-weight:600;color:var(--orange)}
+.wa-big{display:inline-flex;align-items:center;gap:12px;margin-top:24px;background:#25D366;color:#fff;padding:14px 28px;border-radius:25px;font-weight:700;font-size:15px;box-shadow:0 4px 16px rgba(37,211,102,.3);transition:transform .2s}
+.wa-big:hover{transform:translateY(-2px)}
+
+/* FOOTER */
+footer{background:var(--dark);color:#9CA3AF;padding:48px 20px 24px}
+.footer-inner{max-width:1280px;margin:0 auto}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:36px;margin-bottom:36px}
+.footer-logo-img{height:40px;width:auto;object-fit:contain;margin-bottom:10px}
+.footer-logo-text{font-size:20px;font-weight:800;color:#fff;margin-bottom:10px}
+.footer-logo-text span{color:var(--orange)}
+.footer-desc{font-size:13px;line-height:1.7;max-width:260px;margin-bottom:16px}
+.footer-badges{display:flex;flex-direction:column;gap:6px}
+.footer-badge{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#D1D5DB}
+.footer-col h4{font-size:14px;font-weight:700;color:#fff;margin-bottom:14px}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+.footer-col ul li a{font-size:13px;cursor:pointer;transition:color .2s}
+.footer-col ul li a:hover{color:var(--orange)}
+.footer-bottom{border-top:1px solid #374151;padding-top:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:12px}
+.footer-bottom a{color:var(--gray-400)}
+.footer-bottom a:hover{color:var(--orange)}
+
+/* CARRITO */
+.cart-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;opacity:0;pointer-events:none;transition:opacity .3s}
+.cart-overlay.open{opacity:1;pointer-events:all}
+.cart-drawer{position:fixed;top:0;right:0;width:min(420px,100vw);height:100vh;background:#fff;z-index:201;box-shadow:var(--shadow-lg);transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+.cart-drawer.open{transform:translateX(0)}
+.cart-head{padding:18px 20px;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between}
+.cart-head h3{font-size:18px;font-weight:700}
+.cart-close{background:var(--gray-100);border:none;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer}
+.cart-items{flex:1;overflow-y:auto;padding:14px}
+.cart-empty{text-align:center;padding:48px 20px;color:var(--gray-400)}
+.cart-empty .icon{font-size:52px;margin-bottom:12px}
+.cart-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--gray-100)}
+.cart-item-img{width:64px;height:64px;object-fit:contain;border-radius:8px;background:var(--gray-50);flex-shrink:0;padding:4px}
+.cart-item-info{flex:1;min-width:0}
+.cart-item-name{font-size:13px;font-weight:600;line-height:1.35;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cart-item-cat{font-size:11px;color:var(--gray-400)}
+.cart-item-price{font-size:15px;font-weight:700;color:var(--orange)}
+.cart-item-qty{display:flex;align-items:center;gap:8px;margin-top:6px}
+.qty-btn{width:26px;height:26px;border-radius:50%;background:var(--gray-100);border:none;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.qty-btn:hover{background:var(--orange-mid)}
+.qty-num{font-weight:700;font-size:14px;min-width:20px;text-align:center}
+.rm-btn{background:none;border:none;color:var(--gray-400);font-size:18px;cursor:pointer;padding:0 4px}
+.rm-btn:hover{color:#DC2626}
+.cart-foot{padding:18px 20px;border-top:1px solid var(--gray-200);display:flex;flex-direction:column;gap:12px}
+.cart-total{display:flex;justify-content:space-between;font-size:17px;font-weight:700}
+.cart-total span:last-child{color:var(--orange)}
+.checkout-btn{padding:14px;background:var(--orange);color:#fff;border-radius:12px;font-weight:800;font-size:15px;text-align:center;transition:background .2s;cursor:pointer}
+.checkout-btn:hover{background:var(--orange-dk)}
+
+/* MODAL PRODUCTO */
+.prod-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:250;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .3s}
+.prod-modal-overlay.open{opacity:1;pointer-events:all}
+.prod-modal{background:#fff;border-radius:18px;width:100%;max-width:820px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);transform:scale(.95);transition:transform .3s;display:flex;flex-direction:column}
+.prod-modal-overlay.open .prod-modal{transform:scale(1)}
+.pm-head{display:flex;justify-content:flex-end;padding:14px 16px 0}
+.pm-close{background:var(--gray-100);border:none;width:34px;height:34px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pm-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+@media(max-width:600px){.pm-body{grid-template-columns:1fr}}
+.pm-img-wrap{background:var(--gray-50);display:flex;align-items:center;justify-content:center;min-height:280px;border-radius:0 0 0 18px;padding:20px}
+.pm-img{max-height:300px;max-width:100%;object-fit:contain}
+.pm-img-ph{font-size:90px;opacity:.4}
+.pm-info{padding:24px 28px;display:flex;flex-direction:column;gap:10px}
+.pm-cat{font-size:12px;font-weight:700;color:var(--orange);background:var(--orange-lt);padding:3px 10px;border-radius:12px;width:fit-content}
+.pm-name{font-size:17px;font-weight:700;color:var(--gray-800);line-height:1.4}
+.pm-price{font-size:30px;font-weight:800;color:var(--orange)}
+.pm-specs{list-style:none;display:flex;flex-direction:column;gap:5px;margin:4px 0}
+.pm-specs li{font-size:13px;color:var(--gray-600);display:flex;align-items:start;gap:7px;padding:4px 0;border-bottom:1px solid var(--gray-100)}
+.pm-specs li:last-child{border:none}
+.pm-specs li::before{content:"";color:var(--orange);font-weight:700;flex-shrink:0}
+.pm-desc{font-size:13px;color:var(--gray-600);line-height:1.7;background:var(--gray-50);border-radius:8px;padding:12px}
+.pm-add{padding:14px;background:var(--orange);color:#fff;border-radius:12px;font-weight:800;font-size:15px;text-align:center;cursor:pointer;transition:background .2s;border:none;width:100%;font-family:inherit}
+.pm-add:hover{background:var(--orange-dk)}
+.pm-wa{padding:11px;background:#25D366;color:#fff;border-radius:12px;font-weight:700;font-size:14px;text-align:center;cursor:pointer;text-decoration:none;display:block;transition:background .2s}
+.pm-wa:hover{background:#22C55E}
+
+/* MODAL CHECKOUT */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:16px;padding:30px;width:100%;max-width:460px;box-shadow:var(--shadow-lg);transform:scale(.95);transition:transform .3s}
+.modal-overlay.open .modal{transform:scale(1)}
+.modal h3{font-size:20px;font-weight:800;margin-bottom:5px}
+.modal-sub{font-size:13px;color:var(--gray-400);margin-bottom:22px}
+.pay-option{border:2px solid var(--gray-200);border-radius:10px;padding:13px 16px;margin-bottom:10px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px}
+.pay-option:hover{border-color:var(--orange)}
+.pay-option.selected{border-color:var(--orange);background:var(--orange-lt)}
+.pay-option.disabled{opacity:.45;cursor:not-allowed}
+.pay-icon{font-size:26px;flex-shrink:0}
+.pay-name{font-weight:700;font-size:15px}
+.pay-desc{font-size:12px;color:var(--gray-400)}
+.addi-note{background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400E;margin-bottom:12px}
+.modal-total{display:flex;justify-content:space-between;font-size:18px;font-weight:800;padding:14px 0;border-top:2px solid var(--gray-200);margin:8px 0}
+.modal-total span:last-child{color:var(--orange)}
+.modal-btns{display:flex;gap:10px}
+.btn-wa{flex:1;padding:13px;background:#25D366;color:#fff;border-radius:10px;font-weight:800;font-size:14px;text-align:center;cursor:pointer;transition:background .2s}
+.btn-wa:hover{background:#22C55E}
+.btn-cancel{padding:13px 18px;background:var(--gray-100);color:var(--gray-600);border-radius:10px;font-weight:600;font-size:14px;cursor:pointer}
+
+/* WHATSAPP */
+.wa-float{position:fixed;bottom:28px;right:28px;z-index:150;width:58px;height:58px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 4px 20px rgba(37,211,102,.4);transition:transform .2s;text-decoration:none}
+.wa-float:hover{transform:scale(1.12)}
+
+@media(max-width:900px){.footer-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:768px){
+  .header-inner{padding:10px 14px;gap:10px}
+  .hero{padding:30px 16px}
+  .hero-visual{display:none}
+  .hero-slider{max-width:100%;width:100%}
+  .about-inner,.contact-inner{grid-template-columns:1fr}
+  .section{padding:26px 16px}
+  .trust-bar-inner{gap:14px}
+  .trust-item{font-size:12px}
+}
+@media(max-width:560px){.footer-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <a href="/" class="logo">
+      <img id="logoImg" src="/static/logo%20af.jpg" alt="AFtecnologia"
+        onerror="this.style.display='none';document.getElementById('logoFallback').style.display='block'"/>
+      <span class="logo-fallback" id="logoFallback" style="display:none">AF<span>tecnologia</span></span>
+    </a>
+    <div class="search-wrap">
+      <input type="text" id="searchInput" placeholder="Buscar computadores, celulares, impresoras..." autocomplete="off"/>
+      <button onclick="doSearch()">&#128269;</button>
+    </div>
+    <div class="header-actions">
+      <button class="cart-btn" onclick="toggleCart()">
+        &#128722; Carrito <span class="cart-badge" id="cartBadge">0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- TRUST BAR -->
+<div class="trust-bar">
+  <div class="trust-bar-inner">
+    <div class="trust-item">&#128666; Envios Nacionales</div>
+    <div class="trust-item">&#128737; Garantias Extendidas</div>
+    <div class="trust-item">&#9989; Equipos 100% Originales</div>
+    <div class="trust-item">&#129309; +15 Anos de Experiencia</div>
+  </div>
+</div>
+
+<!-- CATEGORIAS -->
+<div class="cats-bar">
+  <div class="cats-inner" id="catsBar">
+    <button class="cat-pill active" onclick="filterCat('',this)">&#127968; Todos</button>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <h1>Tecnologia al mejor<br/><span>precio en Colombia</span></h1>
+      <p>Computadores, celulares, impresoras y accesorios con respaldo humano y garantia real.</p>
+      <div class="hero-badges">
+        <div class="hero-badge">&#128230; +600 productos</div>
+        <div class="hero-badge">&#128205; Bogota, Colombia</div>
+        <div class="hero-badge">&#128172; Atencion personalizada</div>
+      </div>
+      <a href="#productos" class="hero-cta">Ver productos &#128722;</a>
+    </div>
+    <div class="hero-slider" id="heroSlider">
+      <div class="hs-track" id="hsTrack"></div>
+      <button class="hs-prev" onclick="slideNav(-1)" aria-label="Anterior">&#10094;</button>
+      <button class="hs-next" onclick="slideNav(1)" aria-label="Siguiente">&#10095;</button>
+      <div class="hs-dots" id="hsDots"></div>
+    </div>
+  </div>
+</section>
+
+<!-- OFERTAS -->
+<div class="offers-wrap" id="ofertas" style="display:none">
+  <section class="section">
+    <h2 class="section-title">&#128293; Ofertas Especiales</h2>
+    <div class="featured-grid" id="ofertasGrid"></div>
+  </section>
+</div>
+
+<!-- DESTACADOS -->
+<section class="section" id="destacados">
+  <h2 class="section-title">&#11088; Productos Destacados</h2>
+  <div class="featured-grid" id="featuredGrid">
+    <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--gray-400)">Cargando...</div>
+  </div>
+</section>
+
+<!-- TODOS LOS PRODUCTOS -->
+<div class="products-wrap" id="productos">
+  <div class="products-inner">
+    <div class="products-header">
+      <h2 id="productsTitle">Todos los productos</h2>
+      <span class="products-count" id="productsCount"></span>
+    </div>
+    <div class="products-grid" id="productsGrid">
+      <div class="empty-state"><div class="icon">&#9203;</div><p>Cargando productos...</p></div>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+</div>
+
+<!-- SERVICIOS -->
+<div class="services-wrap">
+  <section class="section" id="servicios">
+    <h2 class="section-title">&#128295; Nuestros Servicios</h2>
+    <div class="services-grid">
+      <div class="service-card">
+        <div class="service-icon">&#127978;</div>
+        <div class="service-title">Venta a Distribuidores</div>
+        <div class="service-desc">Precios especiales para revendedores, distribuidores y empresas con volumen. Condiciones comerciales a la medida de su negocio.</div>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">&#128295;</div>
+        <div class="service-title">Soporte Tecnico</div>
+        <div class="service-desc">Diagnostico, reparacion y mantenimiento de equipos de computo, celulares e impresoras. Garantia en cada servicio realizado.</div>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">&#128273;</div>
+        <div class="service-title">Asesoria en Licenciamiento</div>
+        <div class="service-desc">Gestion y renovacion de licencias Microsoft, Kaspersky, ESET y otras soluciones de software para empresas y usuarios finales.</div>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">&#128736;</div>
+        <div class="service-title">Mantenimiento Preventivo</div>
+        <div class="service-desc">Planes de mantenimiento preventivo y correctivo para flotas de equipos corporativos. Contratos empresariales disponibles.</div>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">&#127760;</div>
+        <div class="service-title">Infraestructura IT</div>
+        <div class="service-desc">Instalacion de redes LAN/WiFi, configuracion de servidores, cableado estructurado y soluciones de conectividad para empresas.</div>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">&#127914;</div>
+        <div class="service-title">Ferias y Fondos de Empleados</div>
+        <div class="service-desc">Participacion en ferias de comercio, fondos de empleados y eventos empresariales con portafolio completo y precios especiales.</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- QUIENES SOMOS -->
+<div class="about-wrap" id="nosotros">
+  <div class="about-inner">
+    <div>
+      <h2 class="about-title">Quienes <span>Somos</span></h2>
+      <p class="about-text">En AFTECNOLOGIA somos una empresa dedicada a brindar soluciones integrales en equipos y servicios tecnologicos. Nacimos con el proposito de acercar la innovacion a personas y empresas, ofreciendo productos confiables y un acompanamiento cercano.</p>
+      <p class="about-text">Contamos con mas de 15 anos de experiencia en el sector corporativo y de usuario final, lo que nos permite entender a profundidad las necesidades de nuestros clientes y ofrecerles soluciones practicas, seguras y de calidad.</p>
+      <ul class="about-list">
+        <li>Venta de computadores, celulares, impresoras y accesorios.</li>
+        <li>Venta de repuestos y partes de equipos de computo.</li>
+        <li>Asesoria y consultoria tecnologica personalizada.</li>
+        <li>Soluciones a la medida para el hogar, profesionales y empresas.</li>
+      </ul>
+      <p class="about-text" style="margin-top:14px;font-style:italic;color:#9CA3AF">"Tecnologia con respaldo humano, porque detras de cada equipo hay una persona, un sueno o un negocio que merece lo mejor."</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div class="vision-card">
+        <h3>&#127919; Vision</h3>
+        <p>Ser empresa referente en soluciones tecnologicas en Colombia, reconocida por la confianza y el acompanamiento cercano. Consolidarnos como aliados estrategicos de hogares, profesionales y empresas, expandiendo nuestra presencia a nivel nacional a traves de canales digitales.</p>
+      </div>
+      <div class="vision-card">
+        <h3>&#128640; Mision</h3>
+        <p>Ofrecer servicios y soluciones tecnologicas de alta calidad y confiables a todos nuestros clientes en Colombia, brindando acompanamiento cercano y oportuno que garantice su satisfaccion y contribuya a su crecimiento.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACTO -->
+<div class="contact-wrap" id="contacto">
+  <div class="contact-inner">
+    <div>
+      <h2 class="contact-title">Contactanos</h2>
+      <p class="contact-sub">Estamos listos para ayudarte a encontrar la mejor solucion tecnologica</p>
+      <div class="contact-item">
+        <div class="contact-icon">&#128241;</div>
+        <div>
+          <div class="contact-label">WhatsApp / Llamadas</div>
+          <div class="contact-value">300 216 8444</div>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon">&#128205;</div>
+        <div>
+          <div class="contact-label">Ubicacion</div>
+          <div class="contact-value">Bogota, Colombia</div>
+        </div>
+      </div>
+      <a href="https://wa.me/573002168444?text=Hola%2C%20me%20gustaria%20recibir%20informacion%20sobre%20sus%20productos" target="_blank" class="wa-big">
+        &#128172; Escribenos por WhatsApp
+      </a>
+    </div>
+    <div class="hours-card">
+      <div class="hours-title">&#9200; Horarios de Atencion</div>
+      <div class="hours-row"><span class="hours-day">Lunes a Viernes</span><span class="hours-time">9:00 AM - 5:00 PM</span></div>
+      <div class="hours-row"><span class="hours-day">Sabados</span><span class="hours-time">10:00 AM - 6:00 PM</span></div>
+      <div class="hours-row"><span class="hours-day">Domingos y Festivos</span><span class="hours-time">10:00 AM - 6:00 PM</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div>
+        <img src="/static/logo%20af.jpg" alt="AFtecnologia" class="footer-logo-img"
+          onerror="this.style.display='none';document.getElementById('footerLogoText').style.display='block'"/>
+        <div class="footer-logo-text" id="footerLogoText" style="display:none">AF<span>tecnologia</span></div>
+        <p class="footer-desc">Soluciones tecnologicas integrales para hogares, profesionales y empresas. Bogota, Colombia.</p>
+        <div class="footer-badges">
+          <div class="footer-badge">&#128666; Envios Nacionales</div>
+          <div class="footer-badge">&#128737; Garantias Extendidas</div>
+          <div class="footer-badge">&#9989; Equipos 100% Originales</div>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Productos</h4>
+        <ul>
+          <li><a onclick="filterCatFooter('PORT')">Portatiles</a></li>
+          <li><a onclick="filterCatFooter('CEL')">Celulares</a></li>
+          <li><a onclick="filterCatFooter('IMP')">Impresoras</a></li>
+          <li><a onclick="filterCatFooter('MON')">Monitores</a></li>
+          <li><a onclick="filterCatFooter('TAB')">Tablets</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Servicios</h4>
+        <ul>
+          <li><a href="#servicios">Soporte Tecnico</a></li>
+          <li><a href="#servicios">Mantenimiento</a></li>
+          <li><a href="#servicios">Infraestructura IT</a></li>
+          <li><a href="#servicios">Licenciamiento</a></li>
+          <li><a href="#servicios">Ferias Empresariales</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Informacion</h4>
+        <ul>
+          <li><a href="#nosotros">Quienes Somos</a></li>
+          <li><a href="#contacto">Contacto</a></li>
+          <li><a href="#">Terminos y Condiciones</a></li>
+          <li><a href="#">Politica de Privacidad</a></li>
+          <li><a href="/admin">Panel Admin</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&#169; 2025 AFtecnologia. Bogota, Colombia.</span>
+      <div style="display:flex;gap:16px">
+        <a href="#">Terminos y Condiciones</a>
+        <a href="#">Politica de Privacidad</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- WHATSAPP FLOTANTE -->
+<a class="wa-float" href="https://wa.me/573002168444?text=Hola%2C%20me%20gustaria%20recibir%20informacion%20sobre%20sus%20productos" target="_blank" title="WhatsApp">&#128172;</a>
+
+<!-- CARRITO -->
+<div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-head">
+    <h3>&#128722; Mi carrito</h3>
+    <button class="cart-close" onclick="toggleCart()">&#10005;</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-foot" id="cartFoot" style="display:none">
+    <div class="cart-total"><span>Total</span><span id="cartTotal">$0</span></div>
+    <button class="checkout-btn" onclick="openCheckout()">Solicitar cotizacion &#8594;</button>
+  </div>
+</div>
+
+<!-- MODAL DETALLE PRODUCTO -->
+<div class

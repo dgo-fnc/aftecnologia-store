@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin — AFtecnología</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --orange: #F97316; --orange-dk: #EA580C; --orange-lt: #FFF7ED;
+  --white: #FFFFFF; --gray-50: #F9FAFB; --gray-100: #F3F4F6;
+  --gray-200: #E5E7EB; --gray-400: #9CA3AF; --gray-600: #4B5563;
+  --gray-800: #1F2937; --green: #16A34A; --red: #DC2626;
+  --shadow: 0 1px 3px rgba(0,0,0,.08); --radius: 10px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: var(--gray-50); color: var(--gray-800); }
+button { cursor: pointer; border: none; font-family: inherit; }
+input, select { font-family: inherit; }
+a { color: var(--orange); }
+
+/* ─── Login ───────────────────────────────────────────────────────── */
+#loginScreen {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--orange) 0%, var(--orange-dk) 100%);
+}
+.login-card {
+  background: white; border-radius: 16px; padding: 40px;
+  width: 340px; box-shadow: 0 12px 40px rgba(0,0,0,.15); text-align: center;
+}
+.login-logo { font-size: 22px; font-weight: 800; color: var(--orange); margin-bottom: 6px; }
+.login-sub  { font-size: 13px; color: var(--gray-400); margin-bottom: 28px; }
+.login-input {
+  width: 100%; padding: 12px 16px; border: 2px solid var(--gray-200);
+  border-radius: 8px; font-size: 15px; outline: none; transition: border-color .2s;
+  margin-bottom: 14px; text-align: center; letter-spacing: 2px;
+}
+.login-input:focus { border-color: var(--orange); }
+.login-btn {
+  width: 100%; padding: 13px; background: var(--orange); color: white;
+  border-radius: 8px; font-size: 16px; font-weight: 700; transition: background .2s;
+}
+.login-btn:hover { background: var(--orange-dk); }
+.login-err { color: var(--red); font-size: 13px; margin-top: 10px; }
+
+/* ─── Layout admin ────────────────────────────────────────────────── */
+#adminApp { display: none; min-height: 100vh; }
+.admin-header {
+  background: var(--gray-800); color: white;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 24px; position: sticky; top: 0; z-index: 50;
+}
+.admin-logo { font-size: 16px; font-weight: 700; }
+.admin-logo span { color: var(--orange); }
+.admin-nav { display: flex; gap: 6px; }
+.nav-tab {
+  padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 500;
+  color: #9CA3AF; cursor: pointer; transition: all .15s; background: none;
+}
+.nav-tab:hover, .nav-tab.active { background: rgba(255,255,255,.1); color: white; }
+.logout-btn {
+  padding: 7px 14px; border-radius: 6px; font-size: 13px;
+  background: rgba(255,255,255,.1); color: #D1D5DB; transition: background .15s;
+}
+.logout-btn:hover { background: rgba(239,68,68,.3); color: white; }
+
+.admin-content { max-width: 1100px; margin: 0 auto; padding: 28px 20px; }
+
+/* ─── Tarjetas stats ──────────────────────────────────────────────── */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+.stat-card {
+  background: white; border-radius: var(--radius); padding: 20px;
+  box-shadow: var(--shadow); text-align: center;
+}
+.stat-num { font-size: 32px; font-weight: 800; color: var(--orange); }
+.stat-lbl { font-size: 13px; color: var(--gray-600); margin-top: 4px; }
+
+/* ─── Card ─────────────────────────────────────────────────────────── */
+.card {
+  background: white; border-radius: var(--radius);
+  box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden;
+}
+.card-head {
+  padding: 16px 20px; border-bottom: 1px solid var(--gray-100);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-head h3 { font-size: 15px; font-weight: 700; }
+.card-body { padding: 20px; }
+
+/* ─── Tabla ────────────────────────────────────────────────────────── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: var(--gray-50); padding: 10px 14px; text-align: left; font-weight: 600; color: var(--gray-600); border-bottom: 1px solid var(--gray-200); white-space: nowrap; }
+td { padding: 10px 14px; border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--gray-50); }
+
+/* ─── Input inline ────────────────────────────────────────────────── */
+.inline-input {
+  width: 110px; padding: 6px 10px; border: 2px solid var(--gray-200);
+  border-radius: 6px; font-size: 13px; outline: none; text-align: right;
+}
+.inline-input:focus { border-color: var(--orange); }
+.save-btn {
+  padding: 6px 12px; background: var(--orange); color: white;
+  border-radius: 6px; font-size: 12px; font-weight: 600; transition: background .15s;
+}
+.save-btn:hover { background: var(--orange-dk); }
+.clear-btn {
+  padding: 6px 10px; background: var(--gray-100); color: var(--gray-600);
+  border-radius: 6px; font-size: 12px; transition: background .15s;
+}
+.clear-btn:hover { background: var(--gray-200); }
+
+/* ─── Búsqueda y filtros ─────────────────────────────────────────── */
+.filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.filter-input {
+  flex: 1; min-width: 200px; padding: 9px 14px;
+  border: 2px solid var(--gray-200); border-radius: 8px;
+  font-size: 14px; outline: none;
+}
+.filter-input:focus { border-color: var(--orange); }
+.filter-select {
+  padding: 9px 14px; border: 2px solid var(--gray-200); border-radius: 8px;
+  font-size: 14px; outline: none; background: white;
+}
+.filter-select:focus { border-color: var(--orange); }
+.filter-check { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+.filter-check input { accent-color: var(--orange); width: 15px; height: 15px; }
+
+/* ─── Upload PDF ─────────────────────────────────────────────────── */
+.upload-area {
+  border: 2px dashed var(--gray-200); border-radius: var(--radius);
+  padding: 40px; text-align: center; cursor: pointer; transition: all .2s;
+}
+.upload-area:hover, .upload-area.drag { border-color: var(--orange); background: var(--orange-lt); }
+.upload-area p { color: var(--gray-400); margin-top: 8px; font-size: 14px; }
+.upload-area .icon { font-size: 40px; }
+.upload-result {
+  display: none; background: #F0FDF4; border-radius: var(--radius);
+  padding: 16px 20px; margin-top: 16px; border-left: 4px solid var(--green);
+}
+.upload-result.error { background: #FEF2F2; border-color: var(--red); }
+
+/* ─── Acciones ────────────────────────────────────────────────────── */
+.action-btn {
+  padding: 10px 18px; border-radius: 8px; font-size: 14px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 8px; transition: all .15s;
+}
+.action-btn.primary { background: var(--orange); color: white; }
+.action-btn.primary:hover { background: var(--orange-dk); }
+.action-btn.secondary { background: var(--gray-100); color: var(--gray-800); }
+.action-btn.secondary:hover { background: var(--gray-200); }
+.action-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ─── Badge estado ────────────────────────────────────────────────── */
+.badge-ok  { background: #D1FAE5; color: #065F46; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.badge-no  { background: #FEE2E2; color: #991B1B; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.badge-ov  { background: #FEF3C7; color: #92400E; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+
+/* ─── Toast ──────────────────────────────────────────────────────── */
+#toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--gray-800); color: white;
+  padding: 12px 20px; border-radius: 8px; font-size: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.2); z-index: 9999;
+  transform: translateY(80px); opacity: 0; transition: all .3s;
+}
+#toast.show { transform: translateY(0); opacity: 1; }
+#toast.ok   { background: var(--green); }
+#toast.err  { background: var(--red); }
+
+/* ─── Paginación ─────────────────────────────────────────────────── */
+.pagination { display: flex; gap: 6px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+.pg-btn { padding: 6px 12px; border-radius: 6px; font-size: 13px; background: var(--gray-100); color: var(--gray-800); transition: all .15s; }
+.pg-btn:hover, .pg-btn.active { background: var(--orange); color: white; }
+
+/* ─── Modales editar / crear producto ──────────────────────────── */
+.pm-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 500;
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.pm-box {
+  background: white; border-radius: 14px; padding: 28px;
+  width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto;
+  box-shadow: 0 12px 48px rgba(0,0,0,.22);
+}
+.pm-box h3 { font-size: 17px; font-weight: 700; margin-bottom: 20px; }
+.fld { margin-bottom: 13px; }
+.fld label { display: block; font-size: 11px; font-weight: 700; color: var(--gray-600); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .5px; }
+.fld input, .fld select, .fld textarea {
+  width: 100%; padding: 10px 12px; border: 2px solid var(--gray-200);
+  border-radius: 8px; font-size: 14px; outline: none; font-family: inherit;
+  transition: border-color .2s; background: white;
+}
+.fld input:focus, .fld select:focus, .fld textarea:focus { border-color: var(--orange); }
+.fld textarea { resize: vertical; min-height: 72px; }
+.fld .hint { font-size: 11px; color: var(--gray-400); margin-top: 3px; }
+.pm-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--gray-100); }
+.pm-cancel { padding: 10px 18px; background: var(--gray-100); color: var(--gray-800); border-radius: 8px; font-weight: 600; font-size: 14px; }
+.pm-save { padding: 10px 20px; background: var(--orange); color: white; border-radius: 8px; font-weight: 700; font-size: 14px; }
+.pm-save:hover { background: var(--orange-dk); }
+.edit-btn { padding: 4px 10px; border-radius: 6px; font-size: 12px; background: var(--orange-lt); color: var(--orange); font-weight: 600; border: 1px solid var(--orange-mid); transition: all .15s; }
+.edit-btn:hover { background: var(--orange); color: white; }
+</style>
+</head>
+<body>
+
+<!-- ─── LOGIN ────────────────────────────────────────────────────────────── -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">💻 AFtecnología</div>
+    <div class="login-sub">Panel de administración</div>
+    <input class="login-input" type="password" id="loginPw" placeholder="Contraseña"
+           onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="login-btn" onclick="doLogin()">Ingresar →</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ─── APP ADMIN ─────────────────────────────────────────────────────────── -->
+<div id="adminApp">
+  <div class="admin-header">
+    <div class="admin-logo">💻 AF<span>tecnología</span> — Admin</div>
+    <div class="admin-nav">
+      <button class="nav-tab active" onclick="showTab('dashboard')">📊 Resumen</button>
+      <button class="nav-tab"        onclick="showTab('categorias')">📂 Categorías</button>
+      <button class="nav-tab"        onclick="showTab('productos')">📦 Productos</button>
+      <button class="nav-tab"        onclick="showTab('precios')">📄 Lista precios</button>
+      <button class="nav-tab"        onclick="showTab('fotos')">🖼 Fotos</button>
+      <button class="nav-tab"        onclick="showTab('historial')">📋 Historial</button>
+      <button class="nav-tab"        onclick="showTab('ajustes')">⚙️ Ajustes</button>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Salir →</button>
+  </div>
+
+  <div class="admin-content">
+
+    <!-- ── DASHBOARD ───────────────────────────────────────────────────────── -->
+    <div id="tab-dashboard">
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-num">—</div><div class="stat-lbl">Cargando...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Acciones rápidas</h3></div>
+        <div class="card-body" style="display:flex;gap:12px;flex-wrap:wrap">
+          <button class="action-btn primary" onclick="showTab('precios')">📄 Actualizar lista de precios</button>
+          <button class="action-btn primary" onclick="showTab('fotos')">🖼 Buscar fotos automáticas</button>
+          <a href="/" target="_blank" class="action-btn secondary">🛒 Ver tienda</a>
+          <button class="action-btn secondary" onclick="backfillHistory()" id="backfillBtn">📋 Sincronizar historial</button>
+          <a href="/api/admin/export" class="action-btn secondary" download>📊 Exportar CSV</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CATEGORÍAS ──────────────────────────────────────────────────────── -->
+    <div id="tab-categorias" style="display:none">
+      <div class="card">
+        <div class="card-head">
+          <h3>📂 Márgenes por categoría</h3>
+          <span style="font-size:13px;color:var(--gray-400)">Precio de venta = Precio proveedor + Margen</span>
+        </div>
+        <div class="card-body">
+          <p style="font-size:13px;color:var(--gray-600);margin-bottom:16px">
+            💡 Puedes cambiar el margen de cualquier categoría. Los cambios aplican inmediatamente a todos los productos de esa categoría (excepto los que tengan precio personalizado).
+          </p>
+          <div class="table-wrap">
+            <table id="catsTable">
+              <thead><tr>
+                <th>Categoría</th>
+                <th>Productos</th>
+                <th>Margen actual</th>
+                <th>Nuevo margen</th>
+                <th>Acción</th>
+              </tr></thead>
+              <tbody id="catsTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PRODUCTOS ───────────────────────────────────────────────────────── -->
+    <div id="tab-productos" style="display:none">
+      <div class="card">
+        <div class="card-head">
+          <h3>📦 Productos</h3>
+          <button class="action-btn primary" onclick="openCreateProd()" style="padding:7px 14px;font-size:13px">
+            ➕ Nuevo producto
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="filters">
+            <input class="filter-input" type="text" id="prodSearch" placeholder="🔍 Buscar por nombre o código..." oninput="debounceLoadProds()"/>
+            <select class="filter-select" id="prodCat" onchange="loadAdminProds(1)">
+              <option value="">Todas las categorías</option>
+            </select>
+            <label class="filter-check">
+              <input type="checkbox" id="prodNoImg" onchange="loadAdminProds(1)"/> Sin foto
+            </label>
+            <label class="filter-check">
+              <input type="checkbox" id="prodNoDesc" onchange="loadAdminProds(1)"/> Sin descripción
+            </label>
+            <label class="filter-check">
+              <input type="checkbox" id="prodPortada" onchange="loadAdminProds(1)"/> ⭐ Portada
+            </label>
+            <label class="filter-check">
+              <input type="checkbox" id="prodFeatured" onchange="loadAdminProds(1)"/> 🌟 Destacado
+            </label>
+            <label class="filter-check">
+              <input type="checkbox" id="prodDiscount" onchange="loadAdminProds(1)"/> 🔥 Con descuento
+            </label>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Código</th><th>Nombre</th><th>Categoría</th>
+                <th>Precio proveedor</th><th>Margen</th><th>Precio venta</th>
+                <th>Precio personalizado</th><th>Foto</th><th>Activo</th><th>Editar</th>
+              </tr></thead>
+              <tbody id="prodsTbody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="prodsPagination"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── LISTA PRECIOS ───────────────────────────────────────────────────── -->
+    <div id="tab-precios" style="display:none">
+      <div class="card">
+        <div class="card-head"><h3>📄 Actualizar lista de precios</h3></div>
+        <div class="card-body">
+          <p style="font-size:14px;color:var(--gray-600);margin-bottom:20px">
+            Cuando el proveedor te mande una nueva lista de precios en PDF, súbela aquí.
+            El sistema actualizará automáticamente los precios de todos los productos existentes
+            y agregará los que sean nuevos.
+          </p>
+          <div class="upload-area" id="uploadArea" onclick="document.getElementById('pdfFile').click()"
+               ondragover="event.preventDefault();this.classList.add('drag')"
+               ondragleave="this.classList.remove('drag')"
+               ondrop="handleDrop(event)">
+            <div class="icon">📄</div>
+            <p><strong>Haz clic aquí</strong> o arrastra el PDF de la lista de precios</p>
+            <p style="font-size:12px;margin-top:6px">Solo archivos .pdf</p>
+          </div>
+          <input type="file" id="pdfFile" accept=".pdf" style="display:none" onchange="uploadPDF(this)"/>
+          <div class="upload-result" id="uploadResult"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── FOTOS ───────────────────────────────────────────────────────────── -->
+    <div id="tab-fotos" style="display:none">
+      <div class="card">
+        <div class="card-head"><h3>🖼 Búsqueda automática de fotos</h3></div>
+        <div class="card-body">
+          <p style="font-size:14px;color:var(--gray-600);margin-bottom:20px">
+            Esta función busca automáticamente fotos para los productos que aún no tienen imagen.
+            Procesa hasta <strong>100 productos por vez</strong> para no generar costos adicionales.
+            Puedes ejecutarla cada día hasta completar todo el catálogo.
+          </p>
+          <div id="fetchStatus" style="background:var(--gray-50);border-radius:8px;padding:16px;margin-bottom:16px;font-size:14px;color:var(--gray-600)">
+            Haz clic en el botón para iniciar la búsqueda de fotos.
+          </div>
+          <button class="action-btn primary" id="fetchBtn" onclick="startFetchPhotos()">
+            🖼 Buscar fotos (100 productos)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── HISTORIAL ───────────────────────────────────────────────────────── -->
+    <div id="tab-historial" style="display:none">
+      <div class="card">
+        <div class="card-head">
+          <h3>📋 Historial de productos</h3>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="histSearch" type="text" placeholder="Código o nombre..."
+              style="padding:7px 12px;border:1px solid var(--gray-200);border-radius:6px;font-size:13px;width:220px"
+              oninput="loadHistory(1)">
+            <select id="histEvento" onchange="loadHistory(1)"
+              style="padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:13px">
+              <option value="">Todos los eventos</option>
+              <option value="ingreso">Ingresos</option>
+              <option value="precio">Cambios de precio</option>
+              <option value="reactivacion">Reactivaciones</option>
+              <option value="inactivacion">Inactivaciones</option>
+            </select>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0;overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:var(--gray-50);border-bottom:2px solid var(--gray-200)">
+                <th style="padding:10px 14px;text-align:left">Fecha</th>
+                <th style="padding:10px 14px;text-align:left">Código</th>
+                <th style="padding:10px 14px;text-align:left">Producto</th>
+                <th style="padding:10px 14px;text-align:center">Evento</th>
+                <th style="padding:10px 14px;text-align:right">Precio anterior</th>
+                <th style="padding:10px 14px;text-align:right">Precio nuevo</th>
+                <th style="padding:10px 14px;text-align:left">Nota</th>
+              </tr>
+            </thead>
+            <tbody id="histBody">
+              <tr><td colspan="7" style="padding:30px;text-align:center;color:var(--gray-400)">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="histPagination" style="padding:12px 16px;display:flex;gap:6px;justify-content:center"></div>
+      </div>
+    </div>
+
+    <!-- ── AJUSTES ─────────────────────────────────────────────────────────── -->
+    <div id="tab-ajustes" style="display:none">
+      <div class="card">
+        <div class="card-head"><h3>⚙️ Cambiar contraseña</h3></div>
+        <div class="card-body" style="max-width:380px">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <input type="password" class="filter-input" id="pwCurrent" placeholder="Contraseña actual"/>
+            <input type="password" class="filter-input" id="pwNew" placeholder="Nueva contraseña (mínimo 6 caracteres)"/>
+            <input type="password" class="filter-input" id="pwNew2" placeholder="Confirmar nueva contraseña"/>
+            <button class="action-btn primary" onclick="changePassword()" style="align-self:flex-start">
+              Cambiar contraseña
+            </button>
+            <div id="pwMsg" style="font-size:13px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─── MODAL EDITAR PRODUCTO ─────────────────────────────────────────────── -->
+<div id="editProdModal" class="pm-overlay" style="display:none" onclick="if(event.target===this)closeEditProd()">
+  <div class="pm-box">
+    <h3>✏️ Editar producto</h3>
+    <div class="fld">
+      <label>Código</label>
+      <input type="text" id="editCode" readonly style="background:var(--gray-50);color:var(--gray-400)"/>
+    </div>
+    <div class="fld">
+      <label>Nombre</label>
+      <input type="text" id="editName" placeholder="Nombre del producto"/>
+    </div>
+    <div class="fld">
+      <label>Categoría</label>
+      <select id="editCat"></select>
+    </div>
+    <div class="fld">
+      <label>URL de la foto</label>
+      <input type="url" id="editImg" placeholder="https://..."/>
+      <div class="hint">Pega la URL directa de la imagen (jpg, png, webp...)</div>
+    </div>
+    <div class="fld">
+      <label>Descripción</label>
+      <textarea id="editDesc" placeholder="Descripción del producto (opcional)"></textarea>
+    </div>
+    <div class="fld">
+      <label>Precio con descuento (opcional)</label>
+      <input type="number" id="editDiscount" placeholder="0 = sin descuento" min="0" step="1000"/>
+      <div class="hint">El precio normal se verá tachado y este será el precio de oferta.</div>
+    </div>
+    <div style="display:flex;gap:24px;padding:10px 0;border-top:1px solid var(--gray-100);border-bottom:1px solid var(--gray-100);margin:6px 0">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600">
+        <input type="checkbox" id="editPortada" style="accent-color:var(--orange);width:16px;height:16px"/>
+        ⭐ Portada (aparece en el slider del hero)
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600">
+        <input type="checkbox" id="editFeatured" style="accent-color:var(--orange);width:16px;height:16px"/>
+        🌟 Destacado (sección destacados)
+      </label>
+    </div>
+    <div class="pm-actions">
+      <button class="pm-cancel" onclick="closeEditProd()">Cancelar</button>
+      <button class="pm-save" onclick="saveEditProd()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL NUEVO PRODUCTO ──────────────────────────────────────────────── -->
+<div id="createProdModal" class="pm-overlay" style="display:none" onclick="if(event.target===this)closeCreateProd()">
+  <div class="pm-box">
+    <h3>➕ Nuevo producto manual</h3>
+    <div class="fld">
+      <label>Código *</label>
+      <input type="text" id="newCode" placeholder="Ej: 7ACER001A"/>
+      <div class="hint">Identificador único del producto</div>
+    </div>
+    <div class="fld">
+      <label>Nombre *</label>
+      <input type="text" id="newName" placeholder="Nombre completo del producto"/>
+    </div>
+    <div class="fld">
+      <label>Categoría *</label>
+      <select id="newCat"></select>
+    </div>
+    <div class="fld">
+      <label>Precio proveedor * (COP)</label>
+      <input type="number" id="newPrice" placeholder="0" min="0" step="1000"/>
+      <div class="hint">El precio de venta se calcula sumando el margen de la categoría</div>
+    </div>
+    <div class="fld">
+      <label>URL de la foto</label>
+      <input type="url" id="newImg" placeholder="https://... (opcional)"/>
+    </div>
+    <div class="fld">
+      <label>Descripción</label>
+      <textarea id="newDesc" placeholder="Descripción del producto (opcional)"></textarea>
+    </div>
+    <div class="pm-actions">
+      <button class="pm-cancel" onclick="closeCreateProd()">Cancelar</button>
+      <button class="pm-save" onclick="saveCreateProd()">Crear producto</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── TOAST ─────────────────────────────────────────────────────────────── -->
+<div id="toast"></div>
+
+<script>
+// ─── Utils ────────────────────────────────────────────────────────────────────
+function fmt(n) { return '$' + Math.round(n).toLocaleString('es-CO'); }
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  setTimeout(() => { el.className = ''; }, 3000);
+}
+
+// ─── Login ────────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const pw  = document.getElementById('loginPw').value;
+  const err = document.getElementById('loginErr');
+  err.textContent = '';
+  try {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ password: pw })
+    });
+    if (res.ok) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('adminApp').style.display    = 'block';
+      initAdmin();
+    } else {
+      err.textContent = 'Contraseña incorrecta. Intenta de nuevo.';
+    }
+  } catch(e) { err.textContent = 'Error de conexión.'; }
+}
+
+async function doLogout() {
+  await fetch('/api/admin/logout', { method: 'POST' });
+  location.reload();
+}
+
+// Verificar sesión al cargar
+(async function checkSession() {
+  try {
+    const res  = await fetch('/api/admin/check');
+    const data = await res.json();
+    if (data.logged) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('adminApp').style.display    = 'block';
+      initAdmin();
+    }
+  } catch(e) {}
+})();
+
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
+const tabs = ['dashboard','categorias','productos','precios','fotos','historial','ajustes'];
+function showTab(name) {
+  tabs.forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t === name ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-tab').forEach((b, i) => {
+    b.classList.toggle('active', tabs[i] === name);
+  });
+  if (name === 'categorias') loadCategories();
+  if (name === 'productos')  loadAdminProds(1);
+  if (name === 'dashboard')  loadStats();
+  if (name === 'historial')  loadHistory(1);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+async function initAdmin() {
+  await loadStats();
+  populateCatFilter();
+}
+
+// ─── Stats ────────────────────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const d = await (await fetch('/api/admin/stats')).json();
+    const stats = [
+      { n: d.total_products,  lbl: '📦 Total productos',       color: '' },
+      { n: d.active,          lbl: '✅ Activos',                color: 'var(--green)' },
+      { n: d.inactive,        lbl: '⛔ Inactivos',              color: 'var(--red)' },
+      { n: d.with_image,      lbl: '🖼 Con foto',               color: '' },
+      { n: d.without_image,   lbl: '📷 Sin foto',               color: d.without_image>0?'var(--orange)':'' },
+      { n: d.with_override,   lbl: '💲 Precio personalizado',   color: '' },
+      { n: d.categories,      lbl: '📂 Categorías',             color: '' },
+      { n: d.history_events,  lbl: '📋 Eventos historial',      color: '' },
+    ];
+    document.getElementById('statsGrid').innerHTML = stats.map(s =>
+      `<div class="stat-card"><div class="stat-num" style="${s.color?'color:'+s.color:''}">${s.n ?? '—'}</div><div class="stat-lbl">${s.lbl}</div></div>`
+    ).join('');
+  } catch(e) {}
+}
+
+// ─── Categorías ───────────────────────────────────────────────────────────────
+async function loadCategories() {
+  const tbody = document.getElementById('catsTbody');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--gray-400);padding:20px">Cargando...</td></tr>';
+  try {
+    const cats = await (await fetch('/api/admin/categories')).json();
+    tbody.innerHTML = cats.map(c => `
+      <tr>
+        <td>${c.icon} <strong>${escHtml(c.name)}</strong></td>
+        <td>${c.product_count}</td>
+        <td style="color:var(--orange);font-weight:700">${fmt(c.markup)}</td>
+        <td><input class="inline-input" type="number" id="mk_${c.code}" value="${c.markup}" min="0" step="5000"
+            onkeydown="if(event.key==='Enter')saveMarkup('${c.code}')"/></td>
+        <td>
+          <button class="save-btn" onclick="saveMarkup('${c.code}')">Guardar</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="5">Error cargando categorías</td></tr>'; }
+}
+
+async function saveMarkup(code) {
+  const val = parseInt(document.getElementById(`mk_${code}`).value);
+  if (isNaN(val) || val < 0) { toast('Margen inválido','err'); return; }
+  try {
+    const res = await fetch(`/api/admin/categories/${code}`, {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ markup: val })
+    });
+    if (res.ok) { toast(`✅ Margen de ${code} actualizado a ${fmt(val)}`,'ok'); lo

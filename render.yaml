@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: aftecnologia-store
+    runtime: python
+    buildCommand: pip install -r requirements.txt && python database.py
+    startCommand: python server.py $PORT
+    envVars:
+      - key: DATA_DIR
+        value: /data
+      - key: SECRET_KEY
+        generateValue: true
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
