@@ -641,4 +641,313 @@ async function saveMarkup(code) {
       method: 'PUT', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ markup: val })
     });
-    if (res.ok) { toast(`✅ Margen de ${code} actualizado a ${fmt(val)}`,'ok'); lo
+    if (res.ok) { toast(`✅ Margen de ${code} actualizado a ${fmt(val)}`,'ok'); loadCategories(); }
+    else { toast('Error al guardar','err'); }
+  } catch(e) { toast('Error de conexión','err'); }
+}
+
+// ─── Productos ────────────────────────────────────────────────────────────────
+let _prodDebounce;
+function debounceLoadProds() {
+  clearTimeout(_prodDebounce);
+  _prodDebounce = setTimeout(() => loadAdminProds(1), 400);
+}
+
+async function populateCatFilter() {
+  try {
+    const cats = await (await fetch('/api/admin/categories')).json();
+    const prodSel = document.getElementById('prodCat');
+    const editSel = document.getElementById('editCat');
+    const newSel  = document.getElementById('newCat');
+    cats.forEach(c => {
+      [prodSel, editSel, newSel].forEach(sel => {
+        const o = document.createElement('option');
+        o.value = c.code; o.textContent = `${c.icon} ${c.name}`;
+        sel.appendChild(o);
+      });
+    });
+  } catch(e) {}
+}
+
+async function loadAdminProds(page = 1) {
+  const tbody = document.getElementById('prodsTbody');
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--gray-400)">Cargando...</td></tr>';
+  const q        = document.getElementById('prodSearch').value;
+  const cat      = document.getElementById('prodCat').value;
+  const noImg    = document.getElementById('prodNoImg').checked   ? '1' : '';
+  const noDesc   = document.getElementById('prodNoDesc').checked  ? '1' : '';
+  const portada  = document.getElementById('prodPortada').checked ? '1' : '';
+  const featured = document.getElementById('prodFeatured').checked? '1' : '';
+  const discount = document.getElementById('prodDiscount').checked? '1' : '';
+  const params   = new URLSearchParams({ page, q, cat,
+    no_image: noImg, no_desc: noDesc,
+    portada_f: portada, featured_f: featured, discount_f: discount });
+  try {
+    const d = await (await fetch(`/api/admin/products?${params}`)).json();
+    if (!d.products || !d.products.length) {
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--gray-400)">Sin resultados</td></tr>';
+    } else {
+      tbody.innerHTML = d.products.map(p => `
+        <tr>
+          <td style="font-size:11px;color:var(--gray-400)">${escHtml(p.code)}</td>
+          <td><strong>${escHtml(p.name)}</strong></td>
+          <td style="font-size:12px">${escHtml(p.cat_name||p.category_code)}</td>
+          <td>${fmt(p.supplier_price)}</td>
+          <td>${fmt(p.markup||0)}</td>
+          <td style="font-weight:700;color:var(--orange)">${fmt(p.final_price)}</td>
+          <td>${p.price_override ? fmt(p.price_override) : '<span style="color:var(--gray-400)">—</span>'}</td>
+          <td>${p.image_url
+            ? `<img src="${escHtml(p.image_url)}" style="width:40px;height:40px;object-fit:cover;border-radius:4px" onerror="this.style.display='none'"/>`
+            : '<span style="color:var(--gray-400)">—</span>'}</td>
+          <td>${p.is_active ? '<span style="color:var(--green)">✅</span>' : '<span style="color:var(--red)">⛔</span>'}</td>
+          <td><button class="edit-btn" onclick="openEditProd('${escHtml(p.code)}')">✏️ Editar</button></td>
+        </tr>
+      `).join('');
+    }
+    const pag = document.getElementById('prodsPagination');
+    pag.innerHTML = '';
+    for (let i = 1; i <= (d.pages||1); i++) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      btn.style.cssText = `padding:5px 10px;border-radius:5px;border:1px solid var(--gray-200);`
+        + `background:${i===d.page?'var(--orange)':'white'};color:${i===d.page?'white':'var(--gray-800)'};cursor:pointer;font-size:12px;margin:2px`;
+      btn.onclick = () => loadAdminProds(i);
+      pag.appendChild(btn);
+    }
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--red)">Error: ${e.message}</td></tr>`;
+  }
+}
+
+// ─── Editar producto ──────────────────────────────────────────────────────────
+let _editCode = '';
+async function openEditProd(code) {
+  _editCode = code;
+  try {
+    const d = await (await fetch(`/api/admin/products?q=${encodeURIComponent(code)}&page=1`)).json();
+    const p = (d.products||[]).find(x => x.code === code);
+    if (!p) { toast('Producto no encontrado','err'); return; }
+    document.getElementById('editCode').value      = p.code;
+    document.getElementById('editName').value      = p.name || '';
+    document.getElementById('editCat').value       = p.category_code || '';
+    document.getElementById('editImg').value       = p.image_url || '';
+    document.getElementById('editDesc').value      = p.description || '';
+    document.getElementById('editDiscount').value  = p.discount_price || '';
+    document.getElementById('editPortada').checked  = !!p.is_portada;
+    document.getElementById('editFeatured').checked = !!p.is_featured;
+    document.getElementById('editProdModal').style.display = 'flex';
+  } catch(e) { toast('Error cargando producto','err'); }
+}
+
+function closeEditProd() {
+  document.getElementById('editProdModal').style.display = 'none';
+}
+
+async function saveEditProd() {
+  const disc = document.getElementById('editDiscount').value;
+  const body = {
+    name:          document.getElementById('editName').value.trim(),
+    category_code: document.getElementById('editCat').value,
+    image_url:     document.getElementById('editImg').value.trim() || null,
+    description:   document.getElementById('editDesc').value.trim() || null,
+    is_portada:    document.getElementById('editPortada').checked,
+    is_featured:   document.getElementById('editFeatured').checked,
+    discount_price: disc && parseInt(disc) > 0 ? parseInt(disc) : null,
+  };
+  try {
+    const res = await fetch(`/api/admin/products/${_editCode}`, {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    if (res.ok) {
+      toast('✅ Producto actualizado','ok');
+      closeEditProd();
+      loadAdminProds(1);
+      loadStats();
+    } else {
+      const d = await res.json();
+      toast(d.error || 'Error al guardar','err');
+    }
+  } catch(e) { toast('Error de conexión','err'); }
+}
+
+// ─── Crear producto ───────────────────────────────────────────────────────────
+function openCreateProd() {
+  ['newCode','newName','newImg','newDesc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('newPrice').value = '';
+  document.getElementById('newCat').selectedIndex = 0;
+  document.getElementById('createProdModal').style.display = 'flex';
+}
+
+function closeCreateProd() {
+  document.getElementById('createProdModal').style.display = 'none';
+}
+
+async function saveCreateProd() {
+  const code  = document.getElementById('newCode').value.trim().toUpperCase();
+  const name  = document.getElementById('newName').value.trim();
+  const cat   = document.getElementById('newCat').value;
+  const price = parseInt(document.getElementById('newPrice').value);
+  if (!code || !name || !cat || isNaN(price) || price < 0) {
+    toast('Completa todos los campos obligatorios (*)','err'); return;
+  }
+  const body = {
+    code, name,
+    category_code:  cat,
+    supplier_price: price,
+    image_url:    document.getElementById('newImg').value.trim() || null,
+    description:  document.getElementById('newDesc').value.trim() || null,
+  };
+  try {
+    const res = await fetch('/api/admin/products', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    if (res.ok) {
+      toast('✅ Producto creado','ok');
+      closeCreateProd();
+      loadAdminProds(1);
+      loadStats();
+    } else {
+      const d = await res.json();
+      toast(d.error || 'Error al crear producto','err');
+    }
+  } catch(e) { toast('Error de conexión','err'); }
+}
+
+// ─── Subir PDF ────────────────────────────────────────────────────────────────
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadArea').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') uploadPDF(null, file);
+  else toast('Solo se aceptan archivos PDF','err');
+}
+
+async function uploadPDF(input, fileArg) {
+  const file = fileArg || (input && input.files[0]);
+  if (!file) return;
+  const result = document.getElementById('uploadResult');
+  result.innerHTML = '<div style="color:var(--orange);padding:12px 0">⏳ Subiendo y procesando PDF… esto puede tomar varios minutos.</div>';
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const res = await fetch('/api/admin/upload-pdf', { method: 'POST', body: fd });
+    const d   = await res.json();
+    if (res.ok) {
+      result.innerHTML = `<div style="color:var(--green);padding:12px 0">
+        ✅ ${escHtml(d.message || 'PDF procesado.')}
+        <br>Nuevos: <strong>${d.new??'—'}</strong> |
+        Actualizados: <strong>${d.updated??'—'}</strong> |
+        Sin cambio: <strong>${d.unchanged??'—'}</strong>
+      </div>`;
+      loadStats();
+    } else {
+      result.innerHTML = `<div style="color:var(--red);padding:12px 0">❌ ${escHtml(d.error || 'Error al procesar el PDF.')}</div>`;
+    }
+  } catch(e) {
+    result.innerHTML = `<div style="color:var(--red);padding:12px 0">❌ Error de conexión: ${e.message}</div>`;
+  }
+}
+
+// ─── Buscar fotos ─────────────────────────────────────────────────────────────
+async function startFetchPhotos() {
+  const btn    = document.getElementById('fetchBtn');
+  const status = document.getElementById('fetchStatus');
+  btn.disabled = true;
+  btn.textContent = '⏳ Buscando fotos…';
+  status.innerHTML = '<span style="color:var(--orange)">⏳ Buscando fotos para productos sin imagen. Puede tardar varios minutos…</span>';
+  try {
+    const res = await fetch('/api/admin/fetch-photos', { method: 'POST' });
+    const d   = await res.json();
+    if (res.ok) {
+      status.innerHTML = `<span style="color:var(--green)">✅ Búsqueda completada.<br>
+        Actualizados: <strong>${d.updated??0}</strong> |
+        Sin foto: <strong>${d.skipped??0}</strong> |
+        Errores: <strong>${d.errors??0}</strong></span>`;
+      loadStats();
+    } else {
+      status.innerHTML = `<span style="color:var(--red)">❌ ${escHtml(d.error || 'Error al buscar fotos.')}</span>`;
+    }
+  } catch(e) {
+    status.innerHTML = `<span style="color:var(--red)">❌ Error de conexión: ${e.message}</span>`;
+  }
+  btn.disabled = false;
+  btn.textContent = '🖼 Buscar fotos (100 productos)';
+}
+
+// ─── Historial ────────────────────────────────────────────────────────────────
+async function loadHistory(page = 1) {
+  const tbody  = document.getElementById('histBody');
+  const q      = document.getElementById('histSearch').value.trim();
+  const evento = document.getElementById('histEvento').value;
+  tbody.innerHTML = '<tr><td colspan="7" style="padding:30px;text-align:center;color:var(--gray-400)">Cargando…</td></tr>';
+  const params = new URLSearchParams({ page, q, evento, limit: 50 });
+  try {
+    const d = await (await fetch(`/api/admin/history?${params}`)).json();
+    const rows = d.rows || [];
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="padding:30px;text-align:center;color:var(--gray-400)">Sin registros</td></tr>';
+    } else {
+      tbody.innerHTML = rows.map(r => `
+        <tr style="border-bottom:1px solid var(--gray-100)">
+          <td style="padding:8px 14px;white-space:nowrap;font-size:12px;color:var(--gray-400)">${escHtml(r.fecha)}</td>
+          <td style="padding:8px 14px;font-size:12px;font-weight:600">${escHtml(r.code)}</td>
+          <td style="padding:8px 14px;font-size:12px">${escHtml(r.nota||'')}</td>
+          <td style="padding:8px 14px;text-align:center">
+            <span style="padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;background:var(--gray-100)">${escHtml(r.evento)}</span>
+          </td>
+          <td style="padding:8px 14px;text-align:right;font-size:12px">${r.valor_old ? fmt(r.valor_old) : '—'}</td>
+          <td style="padding:8px 14px;text-align:right;font-size:12px;font-weight:600;color:var(--orange)">${r.valor_new ? fmt(r.valor_new) : '—'}</td>
+          <td style="padding:8px 14px;font-size:12px;color:var(--gray-400)">${escHtml(r.nota||'')}</td>
+        </tr>`).join('');
+    }
+    const pag = document.getElementById('histPagination');
+    pag.innerHTML = '';
+    for (let i = 1; i <= (d.pages||1); i++) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      btn.style.cssText = `padding:5px 10px;border-radius:5px;border:1px solid var(--gray-200);`
+        + `background:${i===page?'var(--orange)':'white'};color:${i===page?'white':'var(--gray-800)'};cursor:pointer;font-size:12px;margin:2px`;
+      btn.onclick = () => loadHistory(i);
+      pag.appendChild(btn);
+    }
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="padding:30px;text-align:center;color:var(--red)">Error: ${e.message}</td></tr>`;
+  }
+}
+
+// ─── Cambiar contraseña ───────────────────────────────────────────────────────
+async function changePassword() {
+  const current = document.getElementById('pwCurrent').value;
+  const n1      = document.getElementById('pwNew').value;
+  const n2      = document.getElementById('pwNew2').value;
+  const msg     = document.getElementById('pwMsg');
+  msg.textContent = '';
+  if (n1.length < 6) { msg.style.color='var(--red)'; msg.textContent='La contraseña debe tener al menos 6 caracteres.'; return; }
+  if (n1 !== n2)     { msg.style.color='var(--red)'; msg.textContent='Las contraseñas no coinciden.'; return; }
+  try {
+    const res = await fetch('/api/admin/change-password', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ current, new: n1 })
+    });
+    const d = await res.json();
+    if (res.ok) { msg.style.color='var(--green)'; msg.textContent='✅ Contraseña cambiada correctamente.'; }
+    else { msg.style.color='var(--red)'; msg.textContent = d.error || 'Error al cambiar contraseña.'; }
+  } catch(e) { msg.style.color='var(--red)'; msg.textContent='Error de conexión.'; }
+}
+
+// ─── Backfill historial ───────────────────────────────────────────────────────
+async function backfillHistory() {
+  const btn = document.getElementById('backfillBtn');
+  btn.disabled = true; btn.textContent = '⏳ Sincronizando…';
+  try {
+    const res = await fetch('/api/admin/backfill-history', { method: 'POST' });
+    const d   = await res.json();
+    toast(res.ok ? `✅ Sincronizado: ${d.added||0} eventos` : (d.error||'Error'), res.ok?'ok':'err');
+  } catch(e) { toast('Error de conexión','err'); }
+  btn.disabled = false; btn.textContent = '📋 Sincronizar historial';
+}
+</script>
+</body>
+</html>

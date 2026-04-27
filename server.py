@@ -322,6 +322,49 @@ class AdminProductsHandler(BaseHandler):
         })
 
 
+    def post(self):
+        if not _check_admin(self):
+            return self.error("No autorizado", 401)
+        try:
+            body = json.loads(self.request.body)
+        except Exception:
+            return self.error("JSON invalido")
+
+        code  = (body.get("code") or "").strip().upper()
+        name  = (body.get("name") or "").strip()
+        cat   = (body.get("category_code") or "").strip().upper()
+        price = body.get("supplier_price")
+
+        if not code or not name or not cat or price is None:
+            return self.error("Faltan campos obligatorios: code, name, category_code, supplier_price")
+
+        try:
+            price = int(price)
+        except (ValueError, TypeError):
+            return self.error("supplier_price debe ser un número")
+
+        conn = self.get_db()
+        try:
+            conn.execute("""
+                INSERT INTO products (code, name, category_code, supplier_price, image_url, description)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (code, name, cat, price,
+                  body.get("image_url") or None,
+                  body.get("description") or None))
+            conn.commit()
+            row = conn.execute("""
+                SELECT p.*, c.markup,
+                       COALESCE(p.price_override, p.supplier_price + c.markup) as final_price
+                FROM products p JOIN categories c ON c.code=p.category_code
+                WHERE p.code=?
+            """, (code,)).fetchone()
+            conn.close()
+            self.write_json(dict(row) if row else {"ok": True})
+        except Exception as e:
+            conn.close()
+            self.error(f"Error al crear producto: {e}", 400)
+
+
 class AdminProductUpdateHandler(BaseHandler):
     """PUT /api/admin/products/<code>"""
     def put(self, code):
@@ -541,6 +584,67 @@ class AdminExportHandler(BaseHandler):
         self.write(output.getvalue())
 
 
+
+
+class AdminHistoryHandler(BaseHandler):
+    """GET /api/admin/history?q=&evento=&page=1&limit=50"""
+    def get(self):
+        if not _check_admin(self):
+            return self.error("No autorizado", 401)
+        q      = self.get_argument("q",      "").strip()
+        evento = self.get_argument("evento", "").strip()
+        page   = max(1, int(self.get_argument("page",  1)))
+        limit  = min(100, max(10, int(self.get_argument("limit", 50))))
+
+        conn = self.get_db()
+        where = ["1=1"]
+        params = []
+        if q:
+            where.append("(h.code LIKE ? OR h.nota LIKE ?)")
+            params += [f"%{q}%", f"%{q}%"]
+        if evento:
+            where.append("h.evento LIKE ?")
+            params.append(f"%{evento}%")
+
+        w = " AND ".join(where)
+        total = conn.execute(f"SELECT COUNT(*) FROM product_history h WHERE {w}", params).fetchone()[0]
+        offset = (page - 1) * limit
+        rows = conn.execute(
+            f"SELECT * FROM product_history h WHERE {w} ORDER BY h.fecha DESC LIMIT ? OFFSET ?",
+            params + [limit, offset]
+        ).fetchall()
+        conn.close()
+        self.write_json({
+            "rows":  [dict(r) for r in rows],
+            "total": total,
+            "page":  page,
+            "pages": math.ceil(total / limit) if total else 1,
+        })
+
+
+class AdminBackfillHistoryHandler(BaseHandler):
+    """POST /api/admin/backfill-history — crea eventos 'ingreso' para productos sin historial"""
+    def post(self):
+        if not _check_admin(self):
+            return self.error("No autorizado", 401)
+        conn = self.get_db()
+        products = conn.execute("""
+            SELECT p.code, p.name, p.supplier_price, p.created_at
+            FROM products p
+            WHERE p.code NOT IN (SELECT DISTINCT code FROM product_history WHERE evento='ingreso')
+        """).fetchall()
+        added = 0
+        for p in products:
+            conn.execute("""
+                INSERT INTO product_history (code, evento, valor_new, nota, fecha)
+                VALUES (?, 'ingreso', ?, ?, ?)
+            """, (p["code"], str(p["supplier_price"]), p["name"], p["created_at"]))
+            added += 1
+        conn.commit()
+        conn.close()
+        self.write_json({"ok": True, "added": added})
+
+
 # --- Routing -----------------------------------------------------------------
 
 def make_app():
@@ -561,6 +665,8 @@ def make_app():
             (r"/api/admin/categories",          AdminCategoriesHandler),
             (r"/api/admin/categories/([^/]+)",  AdminCategoryUpdateHandler),
             (r"/api/admin/products",            AdminProductsHandler),
+            (r"/api/admin/history",             AdminHistoryHandler),
+            (r"/api/admin/backfill-history",    AdminBackfillHistoryHandler),
             (r"/api/admin/products/([^/]+)",    AdminProductUpdateHandler),
             (r"/api/admin/upload-pdf",          AdminUploadPDFHandler),
             (r"/api/admin/fetch-photos",        AdminFetchPhotosHandler),
