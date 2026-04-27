@@ -539,4 +539,368 @@ footer{background:var(--dark);color:#9CA3AF;padding:48px 20px 24px}
 </div>
 
 <!-- MODAL DETALLE PRODUCTO -->
-<div class
+<div class="prod-modal-overlay" id="prodModalOverlay" onclick="closeModal()" style="display:none"></div>
+<div class="prod-modal" id="prodModal" style="display:none">
+  <button class="prod-modal-close" onclick="closeModal()">&#10005;</button>
+  <div class="prod-modal-inner">
+    <div class="prod-modal-img-wrap">
+      <img id="modalImg" src="" alt="" onerror="this.src='/static/logo%20af.jpg'"/>
+    </div>
+    <div class="prod-modal-info">
+      <div class="prod-modal-cat" id="modalCat"></div>
+      <h2 class="prod-modal-name" id="modalName"></h2>
+      <div class="prod-modal-price" id="modalPrice"></div>
+      <div class="prod-modal-desc" id="modalDesc"></div>
+      <div class="prod-modal-actions">
+        <button class="add-cart-btn" id="modalCartBtn" onclick="addToCartFromModal()">&#128722; Agregar al carrito</button>
+        <a class="wa-btn" id="modalWaBtn" href="#" target="_blank">&#128172; Preguntar por WhatsApp</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div class="prod-modal-overlay" id="checkoutOverlay" onclick="closeCheckout()" style="display:none"></div>
+<div class="prod-modal" id="checkoutModal" style="display:none;max-width:500px">
+  <button class="prod-modal-close" onclick="closeCheckout()">&#10005;</button>
+  <div style="padding:24px">
+    <h3 style="margin-bottom:16px">&#128722; Solicitar cotizacion</h3>
+    <div id="checkoutItems" style="margin-bottom:16px;font-size:14px;line-height:1.8"></div>
+    <div style="font-weight:700;font-size:18px;margin-bottom:20px">Total estimado: <span id="checkoutTotal"></span></div>
+    <input type="text" id="checkoutName" placeholder="Tu nombre (opcional)"
+      style="width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;margin-bottom:12px;box-sizing:border-box"/>
+    <button onclick="sendCheckout()"
+      style="width:100%;padding:14px;background:#25d366;color:white;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer">
+      &#128172; Enviar cotizacion por WhatsApp
+    </button>
+  </div>
+</div>
+
+<script>
+// ─── Estado ───────────────────────────────────────────────────────────────────
+let _allCats    = [];
+let _activeCat  = '';
+let _searchQ    = '';
+let _page       = 1;
+let _cart       = [];
+let _modalProd  = null;
+let _searchTimer;
+
+// ─── Utilidades ───────────────────────────────────────────────────────────────
+function fmt(n) {
+  if (n == null) return '';
+  return '$' + Math.round(n).toLocaleString('es-CO');
+}
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── Categorías en la barra ───────────────────────────────────────────────────
+async function loadCats() {
+  try {
+    const cats = await (await fetch('/api/categories')).json();
+    _allCats = cats;
+    const bar = document.getElementById('catsBar');
+    bar.innerHTML = cats.map(c =>
+      `<button class="cat-chip" data-code="${c.code}" onclick="filterCat('${c.code}')">
+        ${c.icon} ${escHtml(c.name)} <span class="cat-count">${c.product_count}</span>
+       </button>`
+    ).join('');
+  } catch(e) {}
+}
+
+function filterCat(code) {
+  _activeCat = _activeCat === code ? '' : code;
+  _page = 1;
+  document.querySelectorAll('.cat-chip').forEach(b => {
+    b.classList.toggle('active', b.dataset.code === _activeCat);
+  });
+  const title = document.getElementById('productsTitle');
+  if (_activeCat) {
+    const cat = _allCats.find(c => c.code === _activeCat);
+    title.textContent = cat ? `${cat.icon} ${cat.name}` : 'Productos';
+  } else {
+    title.textContent = 'Todos los productos';
+  }
+  loadProducts();
+  document.getElementById('productos').scrollIntoView({behavior:'smooth'});
+}
+
+function filterCatFooter(code) { filterCat(code); }
+
+function doSearch() {
+  _searchQ = document.getElementById('searchInput').value.trim();
+  _activeCat = '';
+  _page = 1;
+  document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
+  document.getElementById('productsTitle').textContent = _searchQ ? `Resultados: "${_searchQ}"` : 'Todos los productos';
+  loadProducts();
+  document.getElementById('productos').scrollIntoView({behavior:'smooth'});
+}
+
+document.getElementById('searchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(doSearch, 600);
+});
+
+// ─── Productos ────────────────────────────────────────────────────────────────
+function productCard(p) {
+  const price    = fmt(p.final_price);
+  const oldPrice = p.discount_price ? fmt(p.final_price) : '';
+  const showPrice = p.discount_price ? fmt(p.discount_price) : price;
+  const badge = p.discount_price
+    ? `<div class="prod-badge offer">&#128293; OFERTA</div>`
+    : (p.is_featured ? `<div class="prod-badge feat">&#11088; Destacado</div>` : '');
+  return `
+    <div class="prod-card" onclick="openModal('${escHtml(p.code)}')">
+      <div class="prod-img-wrap">
+        ${badge}
+        <img src="${escHtml(p.image_url || '/static/logo%20af.jpg')}"
+             alt="${escHtml(p.name)}"
+             loading="lazy"
+             onerror="this.src='/static/logo%20af.jpg'"/>
+      </div>
+      <div class="prod-info">
+        <div class="prod-cat">${escHtml(p.cat_icon||'')} ${escHtml(p.cat_name||'')}</div>
+        <div class="prod-name">${escHtml(p.name)}</div>
+        <div class="prod-price-wrap">
+          ${p.discount_price
+            ? `<span class="prod-price-old">${price}</span>
+               <span class="prod-price offer">${fmt(p.discount_price)}</span>`
+            : `<span class="prod-price">${price}</span>`}
+        </div>
+        <button class="prod-cart-btn" onclick="event.stopPropagation();addToCart(${JSON.stringify(p)})">
+          &#128722; Agregar
+        </button>
+      </div>
+    </div>`;
+}
+
+async function loadProducts(page) {
+  if (page) _page = page;
+  const grid  = document.getElementById('productsGrid');
+  const count = document.getElementById('productsCount');
+  grid.innerHTML = '<div class="empty-state"><div class="icon">&#9203;</div><p>Cargando...</p></div>';
+  const params = new URLSearchParams({ page: _page, q: _searchQ, cat: _activeCat });
+  try {
+    const d = await (await fetch(`/api/products?${params}`)).json();
+    count.textContent = d.total ? `${d.total} productos` : '';
+    if (!d.products || !d.products.length) {
+      grid.innerHTML = '<div class="empty-state"><div class="icon">&#128270;</div><p>No encontramos productos con ese filtro.</p></div>';
+    } else {
+      grid.innerHTML = d.products.map(productCard).join('');
+    }
+    // Paginación
+    const pag = document.getElementById('pagination');
+    pag.innerHTML = '';
+    if (d.pages > 1) {
+      for (let i = 1; i <= d.pages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.className = 'page-btn' + (i === d.page ? ' active' : '');
+        btn.onclick = () => { loadProducts(i); window.scrollTo({top: document.getElementById('productos').offsetTop - 80, behavior:'smooth'}); };
+        pag.appendChild(btn);
+      }
+    }
+  } catch(e) {
+    grid.innerHTML = '<div class="empty-state"><div class="icon">&#10060;</div><p>Error al cargar productos.</p></div>';
+  }
+}
+
+async function loadOffers() {
+  try {
+    const d = await (await fetch('/api/products?offers=1&limit=8')).json();
+    const grid = document.getElementById('ofertasGrid');
+    if (!d.products || !d.products.length) {
+      document.getElementById('ofertas').style.display = 'none'; return;
+    }
+    grid.innerHTML = d.products.map(productCard).join('');
+  } catch(e) { document.getElementById('ofertas').style.display = 'none'; }
+}
+
+async function loadFeatured() {
+  try {
+    const d = await (await fetch('/api/products?featured=1&limit=8')).json();
+    const grid = document.getElementById('featuredGrid');
+    if (!d.products || !d.products.length) {
+      document.getElementById('destacados').style.display = 'none'; return;
+    }
+    grid.innerHTML = d.products.map(productCard).join('');
+  } catch(e) { document.getElementById('destacados').style.display = 'none'; }
+}
+
+// ─── Hero slider ──────────────────────────────────────────────────────────────
+let _slides = [];
+let _slideIdx = 0;
+let _slideTimer;
+
+async function loadHeroSlider() {
+  try {
+    const d = await (await fetch('/api/products?portada=1&limit=6')).json();
+    _slides = d.products || [];
+    const track = document.getElementById('hsTrack');
+    const dots  = document.getElementById('hsDots');
+    if (!_slides.length) { document.querySelector('.hero-slider')?.remove(); return; }
+    track.innerHTML = _slides.map(p => `
+      <div class="hs-slide" onclick="openModal('${escHtml(p.code)}')">
+        <img src="${escHtml(p.image_url || '/static/logo%20af.jpg')}"
+             alt="${escHtml(p.name)}" onerror="this.src='/static/logo%20af.jpg'"/>
+        <div class="hs-caption">
+          <div class="hs-name">${escHtml(p.name)}</div>
+          <div class="hs-price">${fmt(p.discount_price || p.final_price)}</div>
+        </div>
+      </div>`).join('');
+    dots.innerHTML = _slides.map((_,i) =>
+      `<span class="hs-dot${i===0?' active':''}" onclick="goSlide(${i})"></span>`
+    ).join('');
+    startSlider();
+  } catch(e) {}
+}
+
+function goSlide(i) {
+  _slideIdx = (i + _slides.length) % _slides.length;
+  document.getElementById('hsTrack').style.transform = `translateX(-${_slideIdx * 100}%)`;
+  document.querySelectorAll('.hs-dot').forEach((d,j) => d.classList.toggle('active', j === _slideIdx));
+}
+function slideNav(dir) { clearTimeout(_slideTimer); goSlide(_slideIdx + dir); startSlider(); }
+function startSlider() {
+  clearTimeout(_slideTimer);
+  _slideTimer = setTimeout(() => { goSlide(_slideIdx + 1); startSlider(); }, 4000);
+}
+
+// ─── Modal producto ───────────────────────────────────────────────────────────
+let _prodCache = {};
+
+async function openModal(code) {
+  let p = _prodCache[code];
+  if (!p) {
+    try {
+      const d = await (await fetch(`/api/products?q=${encodeURIComponent(code)}&limit=1`)).json();
+      p = (d.products||[]).find(x => x.code === code);
+      if (p) _prodCache[code] = p;
+    } catch(e) {}
+  }
+  if (!p) return;
+  _modalProd = p;
+  document.getElementById('modalImg').src = p.image_url || '/static/logo%20af.jpg';
+  document.getElementById('modalCat').textContent = `${p.cat_icon||''} ${p.cat_name||''}`;
+  document.getElementById('modalName').textContent = p.name;
+  const priceEl = document.getElementById('modalPrice');
+  if (p.discount_price) {
+    priceEl.innerHTML = `<span style="text-decoration:line-through;color:#9ca3af;font-size:16px">${fmt(p.final_price)}</span>
+      <span style="color:#f97316;font-size:26px;font-weight:800;margin-left:8px">${fmt(p.discount_price)}</span>
+      <span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700;margin-left:8px">OFERTA</span>`;
+  } else {
+    priceEl.innerHTML = `<span style="color:#f97316;font-size:26px;font-weight:800">${fmt(p.final_price)}</span>`;
+  }
+  document.getElementById('modalDesc').textContent = p.description || '';
+  const waText = encodeURIComponent(`Hola, me interesa el producto: ${p.name} (${fmt(p.discount_price || p.final_price)})`);
+  document.getElementById('modalWaBtn').href = `https://wa.me/573002168444?text=${waText}`;
+  document.getElementById('prodModalOverlay').style.display = 'block';
+  document.getElementById('prodModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('prodModalOverlay').style.display = 'none';
+  document.getElementById('prodModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function addToCartFromModal() {
+  if (_modalProd) { addToCart(_modalProd); closeModal(); }
+}
+
+// ─── Carrito ──────────────────────────────────────────────────────────────────
+function addToCart(p) {
+  const existing = _cart.find(x => x.code === p.code);
+  if (existing) { existing.qty++; }
+  else { _cart.push({ ...p, qty: 1 }); }
+  updateCartUI();
+  toggleCart(true);
+}
+
+function removeFromCart(code) {
+  _cart = _cart.filter(x => x.code !== code);
+  updateCartUI();
+}
+
+function updateCartUI() {
+  const badge = document.getElementById('cartBadge');
+  const total = _cart.reduce((s, x) => s + (x.discount_price || x.final_price) * x.qty, 0);
+  const count = _cart.reduce((s, x) => s + x.qty, 0);
+  badge.textContent = count || '';
+  badge.style.display = count ? 'flex' : 'none';
+  document.getElementById('cartTotal').textContent = fmt(total);
+  document.getElementById('cartFoot').style.display = count ? 'block' : 'none';
+  document.getElementById('cartItems').innerHTML = _cart.length
+    ? _cart.map(x => `
+        <div class="cart-item">
+          <img src="${escHtml(x.image_url||'/static/logo%20af.jpg')}" onerror="this.src='/static/logo%20af.jpg'"/>
+          <div class="cart-item-info">
+            <div class="cart-item-name">${escHtml(x.name)}</div>
+            <div class="cart-item-price">${fmt(x.discount_price || x.final_price)} x ${x.qty}</div>
+          </div>
+          <button class="cart-item-del" onclick="removeFromCart('${x.code}')">&#10005;</button>
+        </div>`).join('')
+    : '<div style="padding:32px;text-align:center;color:#9ca3af">Tu carrito est&#225; vac&#237;o</div>';
+}
+
+function toggleCart(forceOpen) {
+  const drawer = document.getElementById('cartDrawer');
+  const overlay = document.getElementById('cartOverlay');
+  const open = forceOpen === true ? true : drawer.classList.contains('open') ? false : true;
+  drawer.classList.toggle('open', open);
+  overlay.classList.toggle('show', open);
+  document.body.style.overflow = open ? 'hidden' : '';
+}
+
+// ─── Checkout ─────────────────────────────────────────────────────────────────
+function openCheckout() {
+  if (!_cart.length) return;
+  toggleCart(false);
+  const total = _cart.reduce((s, x) => s + (x.discount_price || x.final_price) * x.qty, 0);
+  document.getElementById('checkoutItems').innerHTML = _cart.map(x =>
+    `<div>${escHtml(x.name)} x${x.qty} — <strong>${fmt((x.discount_price||x.final_price)*x.qty)}</strong></div>`
+  ).join('');
+  document.getElementById('checkoutTotal').textContent = fmt(total);
+  document.getElementById('checkoutOverlay').style.display = 'block';
+  document.getElementById('checkoutModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCheckout() {
+  document.getElementById('checkoutOverlay').style.display = 'none';
+  document.getElementById('checkoutModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function sendCheckout() {
+  const name  = document.getElementById('checkoutName').value.trim();
+  const lines = _cart.map(x =>
+    `• ${x.name} x${x.qty}: ${fmt((x.discount_price||x.final_price)*x.qty)}`
+  );
+  const total = _cart.reduce((s, x) => s + (x.discount_price||x.final_price)*x.qty, 0);
+  const msg = [
+    name ? `Hola, soy ${name}.` : 'Hola,',
+    'Me gustaría recibir una cotización:',
+    ...lines,
+    `Total estimado: ${fmt(total)}`
+  ].join('
+');
+  window.open(`https://wa.me/573002168444?text=${encodeURIComponent(msg)}`, '_blank');
+  closeCheckout();
+}
+
+// ─── Inicialización ───────────────────────────────────────────────────────────
+(async function init() {
+  await loadCats();
+  loadHeroSlider();
+  loadOffers();
+  loadFeatured();
+  loadProducts(1);
+})();
+</script>
+</body>
+</html>
