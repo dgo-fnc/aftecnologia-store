@@ -830,7 +830,7 @@ async function uploadPDF(input, fileArg) {
   const result = document.getElementById('uploadResult');
   result.innerHTML = '<div style="color:var(--orange);padding:12px 0">⏳ Subiendo y procesando PDF… esto puede tomar varios minutos.</div>';
   const fd = new FormData();
-  fd.append('file', file);
+  fd.append('pdf_file', file);
   try {
     const res = await fetch('/api/admin/upload-pdf', { method: 'POST', body: fd });
     const d   = await res.json();
