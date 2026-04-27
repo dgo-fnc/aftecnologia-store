@@ -104,4 +104,54 @@ def init_db():
     if "description" not in existing:
         c.execute("ALTER TABLE products ADD COLUMN description TEXT DEFAULT NULL")
     if "is_portada" not in existing:
-        c.execute("ALTER TABLE products ADD COLUMN is_p
+        c.execute("ALTER TABLE products ADD COLUMN is_portada INTEGER DEFAULT 0")
+    if "is_featured" not in existing:
+        c.execute("ALTER TABLE products ADD COLUMN is_featured INTEGER DEFAULT 0")
+    if "discount_price" not in existing:
+        c.execute("ALTER TABLE products ADD COLUMN discount_price INTEGER DEFAULT NULL")
+    if "product_history" not in [r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]:
+        c.execute("""CREATE TABLE IF NOT EXISTS product_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL,
+            evento TEXT NOT NULL, valor_old TEXT, valor_new TEXT, nota TEXT,
+            fecha TEXT DEFAULT (datetime('now','localtime')))""")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_hist_code ON product_history(code)")
+
+    # Insertar categorías por defecto (si no existen)
+    for code, name, icon, markup in DEFAULT_CATEGORIES:
+        c.execute("""
+            INSERT OR IGNORE INTO categories (code, name, icon, markup)
+            VALUES (?, ?, ?, ?)
+        """, (code, name, icon, markup))
+
+    # Contraseña admin por defecto: "aftec2024"
+    default_pass = hashlib.sha256("aftec2024".encode()).hexdigest()
+    c.execute("""
+        INSERT OR IGNORE INTO settings (key, value)
+        VALUES ('admin_password', ?)
+    """, (default_pass,))
+
+    conn.commit()
+    conn.close()
+    print("✅ Base de datos inicializada.")
+
+
+def get_final_price(supplier_price: int, category_code: str, price_override=None,
+                    conn=None) -> int:
+    """Calcula el precio de venta final."""
+    if price_override is not None:
+        return int(price_override)
+    close_conn = False
+    if conn is None:
+        conn = get_db()
+        close_conn = True
+    row = conn.execute(
+        "SELECT markup FROM categories WHERE code = ?", (category_code,)
+    ).fetchone()
+    markup = row["markup"] if row else 100000
+    if close_conn:
+        conn.close()
+    return int(supplier_price) + int(markup)
+
+
+if __name__ == "__main__":
+    init_db()
