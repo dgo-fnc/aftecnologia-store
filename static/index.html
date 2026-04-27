@@ -662,7 +662,7 @@ function productCard(p) {
              onerror="this.src='/static/logo%20af.jpg'"/>
       </div>
       <div class="prod-info">
-        <div class="prod-cat">${escHtml(p.cat_icon||'')} ${escHtml(p.cat_name||'')}</div>
+        <div class="prod-cat">${escHtml(p.category_icon||'')} ${escHtml(p.category_name||'')}</div>
         <div class="prod-name">${escHtml(p.name)}</div>
         <div class="prod-price-wrap">
           ${p.discount_price
@@ -784,7 +784,7 @@ async function openModal(code) {
   if (!p) return;
   _modalProd = p;
   document.getElementById('modalImg').src = p.image_url || '/static/logo%20af.jpg';
-  document.getElementById('modalCat').textContent = `${p.cat_icon||''} ${p.cat_name||''}`;
+  document.getElementById('modalCat').textContent = `${p.category_icon||''} ${p.category_name||''}`;
   document.getElementById('modalName').textContent = p.name;
   const priceEl = document.getElementById('modalPrice');
   if (p.discount_price) {
@@ -887,8 +887,7 @@ function sendCheckout() {
     'Me gustaría recibir una cotización:',
     ...lines,
     `Total estimado: ${fmt(total)}`
-  ].join('
-');
+  ].join('\n');
   window.open(`https://wa.me/573002168444?text=${encodeURIComponent(msg)}`, '_blank');
   closeCheckout();
 }
