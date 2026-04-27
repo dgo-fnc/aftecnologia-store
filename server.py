@@ -487,4 +487,101 @@ class AdminStatsHandler(BaseHandler):
         conn = self.get_db()
         total    = conn.execute("SELECT COUNT(*) FROM products").fetchone()[0]
         active   = conn.execute("SELECT COUNT(*) FROM products WHERE is_active=1").fetchone()[0]
-        inactive = conn.execute("SELECT COUNT(*) FROM products WHERE is
+        inactive = conn.execute("SELECT COUNT(*) FROM products WHERE is_active=0").fetchone()[0]
+        with_image    = conn.execute("SELECT COUNT(*) FROM products WHERE image_url IS NOT NULL AND image_url != ''").fetchone()[0]
+        without_image = conn.execute("SELECT COUNT(*) FROM products WHERE (image_url IS NULL OR image_url = '')").fetchone()[0]
+        with_override = conn.execute("SELECT COUNT(*) FROM products WHERE price_override IS NOT NULL").fetchone()[0]
+        categories    = conn.execute("SELECT COUNT(*) FROM categories").fetchone()[0]
+        history_events = conn.execute("SELECT COUNT(*) FROM product_history").fetchone()[0]
+        conn.close()
+        self.write_json({
+            "total_products": total,
+            "active":         active,
+            "inactive":       inactive,
+            "with_image":     with_image,
+            "without_image":  without_image,
+            "with_override":  with_override,
+            "categories":     categories,
+            "history_events": history_events,
+        })
+
+
+class AdminExportHandler(BaseHandler):
+    """GET /api/admin/export — descarga CSV con todos los productos"""
+    def get(self):
+        if not _check_admin(self):
+            return self.error("No autorizado", 401)
+        import csv, io
+        conn = self.get_db()
+        rows = conn.execute("""
+            SELECT p.code, p.name, p.brand, p.subcategory, p.category_code,
+                   c.name as category_name, p.supplier_price,
+                   COALESCE(p.price_override, p.supplier_price + c.markup) as final_price,
+                   p.discount_price, p.image_url, p.description,
+                   p.is_active, p.is_portada, p.is_featured,
+                   p.created_at, p.updated_at
+            FROM products p
+            JOIN categories c ON c.code = p.category_code
+            ORDER BY p.category_code, p.name
+        """).fetchall()
+        conn.close()
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow([
+            "Codigo", "Nombre", "Marca", "Subcategoria", "Cat_Code", "Categoria",
+            "Precio_Costo", "Precio_Venta", "Precio_Oferta", "Imagen",
+            "Descripcion", "Activo", "Portada", "Destacado", "Creado", "Actualizado"
+        ])
+        for r in rows:
+            writer.writerow(list(r))
+
+        self.set_header("Content-Type", "text/csv; charset=utf-8")
+        self.set_header("Content-Disposition", "attachment; filename=aftecnologia_productos.csv")
+        self.write(output.getvalue())
+
+
+# --- Routing -----------------------------------------------------------------
+
+def make_app():
+    cookie_secret = os.environ.get("SECRET_KEY", "aftec_dev_secret_2024")
+    return tornado.web.Application(
+        [
+            (r"/",                              IndexHandler),
+            (r"/admin",                         AdminPageHandler),
+            (r"/api/products",                  ProductsHandler),
+            (r"/api/categories",                CategoriesHandler),
+            # Admin auth
+            (r"/api/admin/login",               AdminLoginHandler),
+            (r"/api/admin/logout",              AdminLogoutHandler),
+            (r"/api/admin/check",               AdminCheckHandler),
+            # Admin data
+            (r"/api/admin/stats",               AdminStatsHandler),
+            (r"/api/admin/export",              AdminExportHandler),
+            (r"/api/admin/categories",          AdminCategoriesHandler),
+            (r"/api/admin/categories/([^/]+)",  AdminCategoryUpdateHandler),
+            (r"/api/admin/products",            AdminProductsHandler),
+            (r"/api/admin/products/([^/]+)",    AdminProductUpdateHandler),
+            (r"/api/admin/upload-pdf",          AdminUploadPDFHandler),
+            (r"/api/admin/fetch-photos",        AdminFetchPhotosHandler),
+            (r"/api/admin/change-password",     AdminChangePasswordHandler),
+            # Archivos estaticos
+            (r"/static/(.*)",  tornado.web.StaticFileHandler, {"path": STATIC_DIR}),
+            (r"/uploads/(.*)", tornado.web.StaticFileHandler, {"path": UPLOADS_DIR}),
+        ],
+        cookie_secret=cookie_secret,
+        xsrf_cookies=False,
+        debug=False,
+    )
+
+
+if __name__ == "__main__":
+    from database import init_db
+    init_db()
+
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
+    app  = make_app()
+    server = tornado.httpserver.HTTPServer(app)
+    server.listen(port)
+    print(f"✅ Servidor Aftecnología corriendo en http://localhost:{port}")
+    tornado.ioloop.IOLoop.current().start()
